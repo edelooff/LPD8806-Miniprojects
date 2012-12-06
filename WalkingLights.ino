@@ -7,39 +7,84 @@ const byte greenFrequency = 19;
 const byte redFrequency = 13;
 const byte blueFrequency = 9;
 
-const byte intervalGreen = 11;
+const byte intervalGreen = 3;
 const byte intervalRed = 7;
 const byte intervalBlue = 5;
 
-byte waveStep = 0;
 long currentMillis = 0;
 long nextGreen = 0;
 long nextRed = 0;
 long nextBlue = 0;
-long currentColor = 0;
+
+boolean enableGreen = true;
+boolean enableRed = true;
+boolean enableBlue = true;
 
 LPD8806 strip = LPD8806(LED_COUNT);
 
 void setup() {
   // Start up the LED strip
+  Serial.begin(9600);
   strip.begin();
   strip.show();
 }
 
 void loop() {
   currentMillis = millis();
-  greenWave();
-  redWave();
-  blueWave();
+  if (Serial.available()) {
+    switch (Serial.read()) {
+      case 'r':
+        enableRed = !enableRed;
+        break;
+      case 'g':
+        enableGreen = !enableGreen;
+        break;
+      case 'b':
+        enableBlue = !enableBlue;
+        break;
+    }
+  }
+  if (enableGreen)
+    greenWave();
+  else
+    noGreenWave();
+
+  if (enableRed)
+    redWave();
+  else
+    noRedWave();
+
+  if (enableBlue)
+    blueWave();
+  else
+    noBlueWave();
   strip.show();
+}
+
+void noGreenWave() {
+  for (byte index = LED_COUNT; index-- > 0;) {
+          setPixelGreen(index, 0);
+  }
+}
+
+void noRedWave() {
+  for (byte index = LED_COUNT; index-- > 0;) {
+          setPixelRed(index, 0);
+  }
+}
+
+void noBlueWave() {
+  for (byte index = LED_COUNT; index-- > 0;) {
+          setPixelBlue(index, 0);
+  }
 }
 
 void redWave() {
   static byte counter = 0;
   static byte pos = 0;
   if (currentMillis >= nextRed) {
-    nextRed += intervalRed;
-    for (byte index = 0; index < LED_COUNT; index++) {
+    nextRed = currentMillis + intervalRed;
+    for (byte index = LED_COUNT; index-- > 0;) {
       switch ((index + pos) % redFrequency) {
         case 0:
           setPixelRed(index, counter / 2);
@@ -65,17 +110,18 @@ void redWave() {
     }
     counter = ++counter % 30;
     if (counter == 0) {
-      pos++; // run red lights in forward direction
+      pos = ++pos % redFrequency; // pos++; // run red lights in forward direction
     }
   }
 }
 
 void blueWave() {
+  byte index;
   static byte counter = 0;
   static byte pos = 0;
   if (currentMillis >= nextBlue) {
-    nextBlue += intervalBlue;
-    for (byte index = 0; index < LED_COUNT; index++) {
+    nextBlue = currentMillis + intervalBlue;
+    for (index = LED_COUNT; index-- > 0;) {
       switch ((index + pos) % blueFrequency) {
         case 0:
           setPixelBlue(index, counter / 2);
@@ -101,17 +147,18 @@ void blueWave() {
     }
     counter = ++counter % 30;
     if (counter == 0) {
-      pos++; // run blue lights in forward direction
+      pos = ++pos % blueFrequency; // run blue lights in forward direction
     }
   }
 }
 
 void greenWave() {
+  byte index;
   static byte counter = 0;
   static byte pos = 0;
   if (currentMillis >= nextGreen) {
-    nextGreen += intervalGreen;
-    for (byte index = 0; index < LED_COUNT; index++) {
+    nextGreen = currentMillis + intervalGreen;
+    for (index = LED_COUNT; index-- > 0;) {
       switch ((index + pos) % greenFrequency) {
         case 0:
           setPixelGreen(index, 15 - counter / 2);
@@ -137,22 +184,22 @@ void greenWave() {
     }
     counter = ++counter % 30;
     if (counter == 0) {
-      pos--; // run green lights in reverse direction
+      if (pos == 0)
+        pos = greenFrequency - 1;
+      else
+        pos = --pos % (greenFrequency); // run green lights in reverse direction
     }
   }
 }
 
 void setPixelBlue(byte index, byte blue) {
-  currentColor = strip.getPixelColor(index) & 0xFFFF00;
-  strip.setPixelColor(index, currentColor | blue);
+  strip.setPixelColor(index, strip.getPixelColor(index) & 0xFFFF00 | blue);
 }
 
 void setPixelGreen(byte index, long green) {
-  currentColor = strip.getPixelColor(index) & 0x00FFFF;
-  strip.setPixelColor(index, currentColor | (green << 16));
+  strip.setPixelColor(index, strip.getPixelColor(index) & 0x00FFFF | (green << 16));
 }
 
 void setPixelRed(byte index, byte red) {
-  currentColor = strip.getPixelColor(index) & 0xFF00FF;
-  strip.setPixelColor(index, currentColor | (red << 8));
+  strip.setPixelColor(index, strip.getPixelColor(index) & 0xFF00FF | (red << 8));
 }
