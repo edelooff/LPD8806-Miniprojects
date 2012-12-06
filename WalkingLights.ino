@@ -44,38 +44,27 @@ void loop() {
         break;
     }
   }
-  if (enableGreen)
-    greenWave();
-  else
-    noGreenWave();
-
-  if (enableRed)
-    redWave();
-  else
-    noRedWave();
-
-  if (enableBlue)
-    blueWave();
-  else
-    noBlueWave();
+  (enableGreen) ? greenWave() : noGreenWave();
+  (enableRed)   ? redWave()   : noRedWave();
+  (enableBlue)  ? blueWave()  : noBlueWave();
   strip.show();
 }
 
 void noGreenWave() {
   for (byte index = LED_COUNT; index-- > 0;) {
-          setPixelGreen(index, 0);
+    setPixelGreen(index, 0);
   }
 }
 
 void noRedWave() {
   for (byte index = LED_COUNT; index-- > 0;) {
-          setPixelRed(index, 0);
+    setPixelRed(index, 0);
   }
 }
 
 void noBlueWave() {
   for (byte index = LED_COUNT; index-- > 0;) {
-          setPixelBlue(index, 0);
+    setPixelBlue(index, 0);
   }
 }
 
