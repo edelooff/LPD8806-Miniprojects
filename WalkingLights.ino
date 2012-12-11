@@ -2,13 +2,13 @@
 
 #define LED_COUNT (158)
 
-const byte redFrequency = 12;
-const byte greenFrequency = 15;
-const byte blueFrequency = 19;
-
-const byte intervalRed = 16;
-const byte intervalGreen = 12;
-const byte intervalBlue = 8;
+const byte
+  redFrequency = 12,
+  greenFrequency = 15,
+  blueFrequency = 19,
+  intervalRed = 16,
+  intervalGreen = 12,
+  intervalBlue = 8;
 
 byte index;
 long currentMillis, nextRed, nextGreen, nextBlue;
