@@ -1,12 +1,18 @@
 LPD8806-Miniprojects
 ====================
 
-A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are generally small (&lt;200 SLOC) and are intended to demonstrate and explore animation possibilities.
+A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are generally small (&lt;200 SLOC) and are intended to demonstrate and explore animation possibilities. Some of these projects require the LPD8806 library by Adafruit: https://github.com/adafruit/LPD8806.
 
 GreenFlyingDot
 --------------
 
 A basic Arduino sketch sending a green('ish) dot up and down the strip, bouncing at either end.
+
+
+MiniFade
+--------
+
+A very basic pure-SPI way of addressing the LED-strip. A smoothly animated but very bright white flashing strip is the result.
 
 
 WalkingLights
