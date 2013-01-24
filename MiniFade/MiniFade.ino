@@ -18,6 +18,7 @@ void loop() {
   for (byte level = 0; level < sizeof(brightness); ++level) {
     for (byte pos = stripLength; pos-- > 0;)
       for (byte repeats = 3; repeats-- > 0;)
+        // Write 3x for red, green, and blue values
         SPI.transfer(0x80 | brightness[level]);
     SPI.transfer(LPD8806_LATCH);
     delay(fadeDelay);
