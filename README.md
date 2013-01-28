@@ -3,7 +3,7 @@ LPD8806-Miniprojects
 
 A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are generally small (&lt;200 SLOC) and are intended to demonstrate and explore animation possibilities. Some of these projects require the LPD8806 library by Adafruit: https://github.com/adafruit/LPD8806.
 
-BouncingBallPhysics
+BouncyBallPhysics
 -------------------
 
 This sketch is a small physics (gravity and bouncing) simulation on Arduino. It drops a ball from a height of 1 meter (the 'ground' is the beginning of the strip) from where it accelerates (following the law of gravity) until it hits the floor. On each bounce the ball loses a fraction of its kinetic energy. The serial interface can be used to accelerate the ball in a certain direction (positive sends the ball down, negative sends the ball up).
