@@ -3,32 +3,31 @@
 #include "ball.h"
 
 const int
-  deadSpeed = 5,
   ledCount = 158,
   ledPerMeter = 52,
   updateInterval = 2;
 const float
-  gravity = 0.981, // Gravitational acceleration in mm/[timeBase]^2
-  ledSpacing = 1000 / ledPerMeter,
+  deadSpeed = .2, // Speeds under 0.1m/s will cause the ball to fall dead
+  gravity = 9.81, // Gravitational acceleration in m/s^2
+  ledSpacing = 1.0 / ledPerMeter,
   stripCeiling = (ledCount - 1) * ledSpacing,
-  timeBase = 10,   // timebase for all velocity/acceleration units (in ms)
-  timeFactor = updateInterval / timeBase;
+  timeFactor = updateInterval / 1000.0;
 LPD8806
   strip = LPD8806(ledCount);
 ball_t
-  ball = {1, 0, 500, 0.8};
+  ball = {5, 0, 1, 0.8};
 
 void setup() {
   strip.begin();
   strip.show();
-  Serial.begin(9600);
+  Serial.begin(57600);
 }
 
 void loop() {
   static long nextStep = 0;
   long milliSeconds = millis();
   if (Serial.available())
-    ball.velocity += processSerial();
+    addSerialKineticForce();
   if (milliSeconds >= nextStep) {
     nextStep = milliSeconds + updateInterval;
     calculatePhysics();
@@ -43,6 +42,9 @@ void calculatePhysics(void) {
     ball.velocity += gravity * timeFactor;
   }
   if (ball.height < 0) {
+    Serial.print("Floor bounce @ ");
+    Serial.print(ball.velocity, 4);
+    Serial.println("m/s");
     ball.height = 0;
     if (abs(ball.velocity) < deadSpeed) {
       ball.velocity = 0;
@@ -50,6 +52,9 @@ void calculatePhysics(void) {
       ball.velocity = -postBounceVelocity(ball);
     }
   } else if (ball.height > stripCeiling) {
+    Serial.print("Ceiling bounce @ ");
+    Serial.print(ball.velocity, 4);
+    Serial.println("m/s");
     ball.height = stripCeiling;
     ball.velocity = postBounceVelocity(ball);
   }
@@ -67,28 +72,39 @@ float postBounceVelocity(ball_t ball) {
 
 float kineticEnergy(void) {
   // Returns the kinetic energy in Joules.
-  return ball.mass * sq(ball.velocity / 10);
+  return ball.mass * sq(ball.velocity);
 }
 
 float speedFromKinetic(float kinetic) {
   // Given kinetic energy in Joule, how fast will the
   // ball move, in millimeters per [timeBase]
-  return sqrt(kinetic / ball.mass) * 10;
+  return sqrt(kinetic / ball.mass);
 }
 
-int processSerial(void) {
-  byte sP = Serial.peek();
-  if ((sP >= '0' && sP <= '9') || sP == '-')
-    // Process this as extra kinetic energy, not direct speed
-    return Serial.parseInt();
-  else
+void addSerialKineticForce(void) {
+  float newVelocity;
+  int addedForce;
+  byte peekChar = Serial.peek();
+  if ((peekChar >= '0' && peekChar <= '9') || peekChar == '-') {
+    // Adds or subtracts kinetic energy to/from the current ball motion.
+    addedForce = Serial.parseInt();
+    Serial.print("Force of ");
+    Serial.print(addedForce);
+    Serial.print("J changes speed from ");
+    Serial.print(ball.velocity, 4);
+    Serial.print(" to ");
+    newVelocity = speedFromKinetic(max(0, kineticEnergy() + addedForce)); 
+    ball.velocity = (ball.velocity > 0) ? newVelocity : -newVelocity;
+    Serial.print(ball.velocity, 4);
+    Serial.println("m/s");
+  } else {
     Serial.read();
-  return 0;
+  }
 }
 
 void renderDot(int position) {
   // Render the height of the ball on the line.
-  byte intensity = min(127, abs(ball.velocity) * 4);
+  byte intensity = min(127, abs(ball.velocity) * 25);
   strip.setPixelColor(position, 127 - intensity, 0, intensity);
   strip.show();
   strip.setPixelColor(position, 0);
