@@ -6,9 +6,11 @@ A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are gene
 BouncyBallPhysics
 -------------------
 
-This sketch is a small physics (gravity and bouncing) simulation on Arduino. It drops a ball from a height of 1 meter (the 'ground' is the beginning of the strip) from where it accelerates (following the law of gravity) until it hits the floor. On each bounce the ball loses a fraction of its kinetic energy. The serial interface can be used to accelerate the ball in a certain direction (positive sends the ball down, negative sends the ball up).
+This sketch is a small physics (gravitational acceleration and bouncing) simulation on Arduino. A 5kg ball (LED) is dropped from a height of 1 meter (the 'ground' is the beginning of the strip). From there, it accelerates according to the configured gravitational constant (9.81 m/s^2) until it hits the floor. On each bounce the ball loses a fraction of its kinetic energy (this is the configurable elasticity variable). Once the speed of the ball drops below a certain threshold, it stops bouncing altogether.
 
-This sketch is based on the LPD8806 library by Adafruit. It also assumes a strip with 52 LEDs per meter. If you try this yourself and have a different size strip, please change the _ledPerMeter_ to match your strip or the acceleration will look unnatural.
+Using the serial interface, one can add (or subtract) kinetic energy to the ball in motion. Energy is always added in the current direction of motion. For a ball in rest, force is added in the upward direction (not making the ball bounce and lose energy right away). The added force and resulting speed difference are reported back over serial, as well as bounces on either the ground or ceiling,
+
+This sketch is based on the LPD8806 library by Adafruit. It also assumes a strip with 52 LEDs per meter. If you try this yourself and have a different size strip, please change the _ledPerMeter_ to match your strip or the visible acceleration will not match our terrestrial acceleration. Zero-gravity and fully elastic bounces are supported; zero-weight objects are not (yet) supported.
 
 GreenFlyingDot
 --------------

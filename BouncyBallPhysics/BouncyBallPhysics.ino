@@ -7,15 +7,16 @@ const int
   ledPerMeter = 52,
   updateInterval = 2;
 const float
-  deadSpeed = .2, // Speeds under 0.1m/s will cause the ball to fall dead
-  gravity = 9.81, // Gravitational acceleration in m/s^2
+  deadSpeed = .2, // Speeds under 0.2m/s will cause the ball to fall dead
+  gravity = 9.807, // Earth gravity in m/s^2
+//  gravity = 1.622, // Lunar gravity in m/s^2
   ledSpacing = 1.0 / ledPerMeter,
   stripCeiling = (ledCount - 1) * ledSpacing,
   timeFactor = updateInterval / 1000.0;
 LPD8806
   strip = LPD8806(ledCount);
 ball_t
-  ball = {5, 0, 1, 0.8};
+  ball = {5, 0, 1, .75};
 
 void setup() {
   strip.begin();
@@ -27,7 +28,7 @@ void loop() {
   static long nextStep = 0;
   long milliSeconds = millis();
   if (Serial.available())
-    addSerialKineticForce();
+    serialAddKineticEnergy();
   if (milliSeconds >= nextStep) {
     nextStep = milliSeconds + updateInterval;
     calculatePhysics();
@@ -46,11 +47,10 @@ void calculatePhysics(void) {
     Serial.print(ball.velocity, 4);
     Serial.println("m/s");
     ball.height = 0;
-    if (abs(ball.velocity) < deadSpeed) {
+    if (abs(ball.velocity) < deadSpeed)
       ball.velocity = 0;
-    } else {
+    else
       ball.velocity = -postBounceVelocity(ball);
-    }
   } else if (ball.height > stripCeiling) {
     Serial.print("Ceiling bounce @ ");
     Serial.print(ball.velocity, 4);
@@ -75,13 +75,13 @@ float kineticEnergy(void) {
   return ball.mass * sq(ball.velocity);
 }
 
-float speedFromKinetic(float kinetic) {
+float speedFromKinetic(float energy) {
   // Given kinetic energy in Joule, how fast will the
   // ball move, in millimeters per [timeBase]
-  return sqrt(kinetic / ball.mass);
+  return sqrt(energy / ball.mass);
 }
 
-void addSerialKineticForce(void) {
+void serialAddKineticEnergy(void) {
   float newVelocity;
   int addedForce;
   byte peekChar = Serial.peek();
