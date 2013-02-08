@@ -7,7 +7,6 @@ const int
   ledPerMeter = 52,
   updateInterval = 2;
 const float
-  deadSpeed = .2, // Speeds under 0.2m/s will cause the ball to fall dead
   gravity = 9.807, // Earth gravity in m/s^2
 //  gravity = 1.622, // Lunar gravity in m/s^2
   ledSpacing = 1.0 / ledPerMeter,
@@ -15,11 +14,10 @@ const float
   timeFactor = updateInterval / 1000.0;
 LPD8806
   strip = LPD8806(ledCount);
-Ball balls[3] = {
+Ball balls[] = {
     Ball(stripCeiling, 25, .90, 1.2),
     Ball(stripCeiling, 15, .75, 1.2),
-    Ball(stripCeiling, 10, .65, 1.0),
-    };
+    Ball(stripCeiling, 10, .65, 1.0)};
 const byte ballCount = sizeof(balls) / sizeof(Ball);
 
 void setup() {
@@ -34,7 +32,7 @@ void loop() {
   if (Serial.available())
     serialAddKineticEnergy();
   if (milliSeconds >= nextStep) {
-    nextStep = milliSeconds + updateInterval;
+    nextStep += updateInterval;
     for (byte i = ballCount; i-- > 0;)
       balls[i].accelerate(gravity, timeFactor);
     renderDots();
@@ -43,11 +41,13 @@ void loop() {
 
 void serialAddKineticEnergy(void) {
   byte peekChar = Serial.peek();
-  if ((peekChar >= '0' && peekChar <= '9') || peekChar == '-') {
+  if (peekChar >= '0' && peekChar <= '9') {
     // Adds or subtracts kinetic energy to/from the current ball motion.
     int addedForce = Serial.parseInt();
-    for (byte i = ballCount; i-- > 0;) {
-      Serial.print("Force of ");
+    for (int i = 0; i < ballCount; ++i) {
+      Serial.print("Ball #");
+      Serial.print(i);
+      Serial.print(": Force of ");
       Serial.print(addedForce);
       Serial.print("J changes speed from ");
       Serial.print(balls[i].speed, 4);

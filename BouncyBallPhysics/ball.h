@@ -1,23 +1,24 @@
-enum Direction {
-  DOWN = 1,
-  UP = -1
-};
+#include <Arduino.h>
 
 class Ball {
   public:
+    enum Direction {
+        DOWN = 1,
+        UP = -1
+    };
     Ball(float ceiling, int mass, float elasticity),
-    Ball(float ceiling, int mass, float elasticity, float height);
+    Ball(float ceiling, int mass, float elasticity, float height, float speed = 0);
     const float elasticity;
     float
       height,
       speed,
-      kineticEnergy(),
-      velocity();
+      kineticEnergy(void),
+      velocity(void);
     void
       accelerate(float acceleration, float duration),
-      applyForce(float energy, Direction dir),
-      applyForce(float energy),
-      report(void),
+      applyForce(float force),
+      applyForce(float force, Direction dir),
+      serialReport(),
       travel(float duration);
 
   private:
@@ -25,11 +26,12 @@ class Ball {
     const float ceiling;
     Direction direction;
     float
-      acceleratedMovement(float acceleration, float duration),
-      accelerationTime(float acceleration, float distance);
+      displacementAccelerated(float acceleration, float duration),
+      displacementConstant(float duration),
+      timeForDisplacement(float acceleration, float distance);
     void
-      applyTemporalForce(float acceleration, float duration),
-      bounce(),
-      reverseDirection(),
+      bounce(void),
+      changeVelocity(float acceleration, float duration),
+      reverseDirection(void),
       speedFromEnergy(float energy);
 };

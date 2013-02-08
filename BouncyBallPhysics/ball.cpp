@@ -1,17 +1,19 @@
 #include "ball.h"
-#include <Arduino.h>
 
 Ball::Ball(float ceiling, int mass, float elasticity):
     ceiling(ceiling),
     mass(mass),
     elasticity(elasticity) {
+        direction = DOWN;
 }
 
-Ball::Ball(float ceiling, int mass, float elasticity, float height):
+Ball::Ball(float ceiling, int mass, float elasticity, float height, float speed):
     ceiling(ceiling),
     mass(mass),
     elasticity(elasticity),
-    height(height) {
+    height(height),
+    speed(speed) {
+        direction = DOWN;
 }
 
 void Ball::accelerate(float acceleration, float duration) {
@@ -22,9 +24,9 @@ void Ball::accelerate(float acceleration, float duration) {
   // forces should have a negative sign.
   float distance, newHeight, timeTaken;
   if (speed || height > 0) {
-    newHeight = height - acceleratedMovement(acceleration, duration);
+    newHeight = height - displacementAccelerated(acceleration, duration);
     if (newHeight < 0 || newHeight > ceiling) {
-      distance = (newHeight < 0) ? height : ceiling - height;
+      distance = newHeight < 0 ? height : ceiling - height;
       // Bounce on the floor, calculate exact collision time
       if (!distance) {
         timeTaken = 0;
@@ -33,33 +35,33 @@ void Ball::accelerate(float acceleration, float duration) {
         Serial.print("Remaining distance: ");
         Serial.print(distance, 4);
         Serial.print(" is covered in: ");
-        timeTaken = accelerationTime(acceleration, distance);
+        timeTaken = timeForDisplacement(acceleration, distance);
         Serial.println(timeTaken, 4);
-        applyTemporalForce(acceleration, timeTaken);
+        changeVelocity(acceleration, timeTaken);
       }
       bounce();
-      applyTemporalForce(acceleration, duration - timeTaken); // post-bounce
-      height = (newHeight < 0) ? 0 : ceiling;
-      height -= acceleratedMovement(acceleration, duration - timeTaken);
+      changeVelocity(acceleration, duration - timeTaken); // post-bounce
+      height = newHeight < 0 ? 0 : ceiling;
+      height -= displacementAccelerated(acceleration, duration - timeTaken);
       if (height < 0) {
         height = 0;
         speed = 0;
       }
       Serial.print("post bounce: ");
-      report();
+      serialReport();
     } else {
       height = newHeight;
-      applyTemporalForce(acceleration, duration);
+      changeVelocity(acceleration, duration);
     }
   }
 }
 
-void Ball::applyTemporalForce(float acceleration, float duration) {
-  // Applies a force to the ball resulting from acceleration for a given time
-  applyForce(abs(mass * acceleration * duration), acceleration > 0 ? DOWN : UP);
+void Ball::applyForce(float force) {
+  // Applies a certain force to the ball in the current direction of motion.
+  applyForce(force, direction);
 }
 
-void Ball::applyForce(float energy, Direction dir) {
+void Ball::applyForce(float force, Direction dir) {
   // Applies a certain force to the ball in the given direction.
   //
   // If the force applied is in the current direction of motion,
@@ -68,18 +70,13 @@ void Ball::applyForce(float energy, Direction dir) {
   // that, the direction is reversed and the remainder of the force
   // is applied to generate speed in the new direction.
   if (dir == direction) {
-    speedFromEnergy(kineticEnergy() + energy);
+    speedFromEnergy(kineticEnergy() + force);
   } else {
   float currentEnergy = kineticEnergy();
-    if (energy > currentEnergy)
+    if (force > currentEnergy)
       reverseDirection();
-    speedFromEnergy(abs(currentEnergy - energy));
+    speedFromEnergy(abs(currentEnergy - force));
   }
-}
-
-void Ball::applyForce(float energy) {
-  // Applies a certain force to the ball in the current direction of motion.
-  speedFromEnergy(kineticEnergy() + energy);
 }
 
 void Ball::bounce(void) {
@@ -91,16 +88,26 @@ void Ball::bounce(void) {
     Serial.print("Ceiling bounce @ ");
   else
     Serial.print("Floor bounce @ ");
-  report();
+  serialReport();
   reverseDirection();
-  speedFromEnergy(max(0, kineticEnergy() - 1) * elasticity);
+  speedFromEnergy(kineticEnergy() * elasticity);
+}
+
+void Ball::changeVelocity(float acceleration, float duration) {
+  // Changes the velocity of the ball resulting from acceleration
+  float speedDiff = abs(acceleration * duration);
+  if (direction == (acceleration >= 0 ? DOWN : UP)) {
+    speed += speedDiff;
+  } else if (speedDiff > speed) {
+    speed = speedDiff - speed;
+    reverseDirection();
+  } else {
+    speed -= speedDiff;
+  }
 }
 
 void Ball::travel(float duration) {
-  // Moves the ball for a given duration at the current velocity;
-  //
-  // This effectively moves the ball in a zero-g environment,
-  // with no gravitational pull acting on it.
+  // Moves the ball for a given duration at the current velocity
   height += duration * velocity();
 }
 
@@ -110,21 +117,22 @@ void Ball::reverseDirection(void) {
 }
 
 void Ball::speedFromEnergy(float energy) {
-  // Given the kinetic energy and mass
-  // of the object, calculate its speed:
+  // Resets the speed of the ball based on its mass and given kinetic energy
   speed = sqrt(energy / mass * 2);
 }
 
-float Ball::acceleratedMovement(float acceleration, float duration) {
+float Ball::displacementAccelerated(float acceleration, float duration) {
   // Returns the distance moved during acceleration
-  return velocity() * duration + acceleration / 2 * sq(duration);
+  return displacementConstant(duration) + 0.5 * acceleration * sq(duration);
 }
 
-float Ball::accelerationTime(float acceleration, float distance) {
-  // Returns the time needed to travel the given distance
-  //
-  // The time required is dependent on both the current speed and the
-  // acceleration force acting on the ball.
+float Ball::displacementConstant(float duration) {
+  // Returns thh distance moved during constant velocity
+  return velocity() * duration;
+}
+
+float Ball::timeForDisplacement(float acceleration, float distance) {
+  // Returns the time needed to travel the given distance under acceleration
   return (sqrt(sq(speed) + 2 * acceleration * distance) - speed) / acceleration;
 }
 
@@ -134,14 +142,12 @@ float Ball::kineticEnergy(void) {
 }
 
 float Ball::velocity(void) {
-  // Returns the velocity of the ball (speed * direction).
-  //
-  // Our system only has two directions, up and down. These are
-  // represented by negative and positive velocity respectively.
+  // Returns the velocity (speed * direction) of the ball; Positive is downward
   return speed * direction;
 }
 
-void Ball::report() {
+void Ball::serialReport() {
+  // Reports the current height, speed and kinetic energy over serial
   Serial.print("h: ");
   Serial.print(height, 4);
   Serial.print(", v: ");
