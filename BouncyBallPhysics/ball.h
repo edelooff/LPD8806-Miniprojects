@@ -15,20 +15,19 @@ class Ball {
       kineticEnergy(void),
       velocity(void);
     void
-      accelerate(float acceleration, float duration),
       applyForce(float force),
       applyForce(float force, Direction dir),
       serialReport(),
-      travel(float duration);
+      travel(float duration, float acceleration = 0);
 
   private:
     const int mass;
     const float ceiling;
     Direction direction;
     float
-      displacementAccelerated(float acceleration, float duration),
+      displacementAccelerated(float duration, float acceleration),
       displacementConstant(float duration),
-      timeForDisplacement(float acceleration, float distance);
+      timeForDisplacement(float distance, float acceleration);
     void
       bounce(void),
       changeVelocity(float acceleration, float duration),

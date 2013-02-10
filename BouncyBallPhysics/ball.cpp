@@ -16,7 +16,7 @@ Ball::Ball(float ceiling, int mass, float elasticity, float height, float speed)
         direction = DOWN;
 }
 
-void Ball::accelerate(float acceleration, float duration) {
+void Ball::travel(float duration, float acceleration) {
   // Applies an acceleration on the ball.
   //
   // Gravity and other downward pulling forces should
@@ -24,7 +24,7 @@ void Ball::accelerate(float acceleration, float duration) {
   // forces should have a negative sign.
   float distance, newHeight, timeTaken;
   if (speed || (height < ceiling && height > 0)) {
-    newHeight = height - displacementAccelerated(acceleration, duration);
+    newHeight = height - displacementAccelerated(duration, acceleration);
     if (newHeight <= 0 || newHeight >= ceiling) {
       // Ball bounces, calculate exact time to collision
       distance = newHeight < 0 ? height : ceiling - height;
@@ -32,8 +32,8 @@ void Ball::accelerate(float acceleration, float duration) {
         timeTaken = 0;
       } else {
         // Only calculate time required if there is distance to cover
-        timeTaken = timeForDisplacement(acceleration, distance);
-        changeVelocity(acceleration, timeTaken);
+        timeTaken = timeForDisplacement(distance, acceleration);
+        changeVelocity(timeTaken, acceleration);
         #if DEBUG
           Serial.print("Remaining distance: ");
           Serial.print(distance, 7);
@@ -43,7 +43,7 @@ void Ball::accelerate(float acceleration, float duration) {
       }
       bounce();
       // After the bounce, calculate the post-bounce movement
-      changeVelocity(acceleration, duration - timeTaken);
+      changeVelocity(duration - timeTaken, acceleration);
       height = newHeight < 0 ? 0 : ceiling;
       #if DEBUG
         Serial.print("Post-bounce height: ");
@@ -51,13 +51,14 @@ void Ball::accelerate(float acceleration, float duration) {
         Serial.print(", time: ");
         Serial.print(duration - timeTaken, 7);
         Serial.print(", movement: ");
-        Serial.println(displacementAccelerated(acceleration, duration - timeTaken), 6);
+        Serial.println(
+            displacementAccelerated(duration - timeTaken, acceleration), 6);
       #endif
-      height -= displacementAccelerated(acceleration, duration - timeTaken);
+      height -= displacementAccelerated(duration - timeTaken, acceleration);
       postBounceLimitCheck();
     } else {
       height = newHeight;
-      changeVelocity(acceleration, duration);
+      changeVelocity(duration, acceleration);
     }
   }
 }
@@ -116,7 +117,7 @@ void Ball::postBounceLimitCheck(void) {
   }
 }
 
-void Ball::changeVelocity(float acceleration, float duration) {
+void Ball::changeVelocity(float duration, float acceleration) {
   // Changes the velocity of the ball resulting from acceleration
   float speedDiff = abs(acceleration * duration);
   if (direction == (acceleration >= 0 ? DOWN : UP)) {
@@ -127,11 +128,6 @@ void Ball::changeVelocity(float acceleration, float duration) {
   } else {
     speed -= speedDiff;
   }
-}
-
-void Ball::travel(float duration) {
-  // Moves the ball for a given duration at the current velocity
-  height += duration * velocity();
 }
 
 void Ball::reverseDirection(void) {
@@ -154,8 +150,10 @@ float Ball::displacementConstant(float duration) {
   return velocity() * duration;
 }
 
-float Ball::timeForDisplacement(float acceleration, float distance) {
+float Ball::timeForDisplacement(float distance, float acceleration) {
   // Returns the time needed to travel the given distance under acceleration
+  if (!acceleration)
+    return distance / speed;
   acceleration = abs(acceleration);
   return (sqrt(sq(speed) + 2 * acceleration * distance) - speed) / acceleration;
 }

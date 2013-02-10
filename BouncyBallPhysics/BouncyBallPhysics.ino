@@ -17,7 +17,7 @@ LPD8806
 Ball balls[] = {
     Ball(stripCeiling, 25, .80, 1.2),
     Ball(stripCeiling, 15, .75, 1.2),
-    Ball(stripCeiling, 10, .65, 1.0)};
+    Ball(stripCeiling, 10, .65, 1.5)};
 const long colors[] = {
     strip.Color(127, 0, 0),
     strip.Color(0, 127, 0),
@@ -38,7 +38,7 @@ void loop() {
   if (milliSeconds >= nextStep) {
     nextStep += updateInterval;
     for (byte i = ballCount; i-- > 0;)
-      balls[i].accelerate(gravity, timeFactor);
+      balls[i].travel(timeFactor, gravity);
     renderDots();
   }
 }
@@ -50,7 +50,7 @@ void serialAddKineticEnergy(void) {
     unsigned long addedForce = Serial.parseInt();
     for (int i = 0; i < ballCount; ++i) {
       Serial.print("Ball #");
-      Serial.print(i);
+      Serial.print(i + 1);
       Serial.print(": Force of ");
       Serial.print(addedForce);
       Serial.print("J changes speed from ");
@@ -64,7 +64,7 @@ void serialAddKineticEnergy(void) {
     if (Serial.read() == '?') {
       for (int i = 0; i < ballCount; ++i) {
         Serial.print("Ball #");
-        Serial.print(i);
+        Serial.print(i + 1);
         Serial.print(": ");
         balls[i].serialReport();
       }
