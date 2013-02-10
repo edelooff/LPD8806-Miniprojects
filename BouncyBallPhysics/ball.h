@@ -3,8 +3,8 @@
 class Ball {
   public:
     enum Direction {
-        DOWN = 1,
-        UP = -1
+        DOWN = -1,
+        UP = 1
     };
     Ball(float ceiling, int mass, float elasticity),
     Ball(float ceiling, int mass, float elasticity, float height, float speed = 0);

@@ -16,33 +16,36 @@ Ball::Ball(float ceiling, int mass, float elasticity, float height, float speed)
         direction = DOWN;
 }
 
-void Ball::travel(float duration, float acceleration) {
+void Ball::travel(float duration, float gravity) {
   // Applies an acceleration on the ball.
   //
   // Gravity and other downward pulling forces should
   // be given as positive numbers. Similarly, upward
   // forces should have a negative sign.
-  float distance, newHeight, timeTaken;
+  float distance, newHeight, timeTaken, acceleration = -gravity;
   if (speed || (height < ceiling && height > 0)) {
-    newHeight = height - displacementAccelerated(duration, acceleration);
+    newHeight = height + displacementAccelerated(duration, acceleration);
     if (newHeight <= 0 || newHeight >= ceiling) {
       // Ball bounces, calculate exact time to collision
-
-      //TODO Make distance negative where it requires to be negative and
-      // make the timeForDisplacement function work on non-abs gravity and
-      // actual velocity as opposed to speed. That should fix it without the
-      // current abs() hack.
-      distance = newHeight < 0 ? height : ceiling - height;
+      #if DEBUG
+        Serial.print("Bounce! d-calculated=");
+        Serial.println(displacementAccelerated(duration, acceleration), 7);
+      #endif
+      distance = newHeight < 0 ? -height : ceiling - height;
       if (!distance) {
         timeTaken = 0;
       } else {
         // Only calculate time required if there is distance to cover
+        #if DEBUG
+          Serial.print("d-to-impact=");
+          Serial.print(distance, 7);
+          Serial.print(", v=");
+          Serial.print(velocity(), 7);
+        #endif
         timeTaken = timeForDisplacement(distance, acceleration);
         changeVelocity(timeTaken, acceleration);
         #if DEBUG
-          Serial.print("Remaining distance: ");
-          Serial.print(distance, 7);
-          Serial.print(" is covered in: ");
+          Serial.print(", delta-t=");
           Serial.println(timeTaken, 7);
         #endif
       }
@@ -51,15 +54,15 @@ void Ball::travel(float duration, float acceleration) {
       changeVelocity(duration - timeTaken, acceleration);
       height = newHeight < 0 ? 0 : ceiling;
       #if DEBUG
-        Serial.print("Post-bounce height: ");
-        Serial.print(height, 7);
-        Serial.print(", time: ");
+        Serial.print("t-post-bounce=");
         Serial.print(duration - timeTaken, 7);
-        Serial.print(", movement: ");
+        Serial.print(", v=");
+        Serial.print(velocity(), 7);
+        Serial.print(", delta-h=");
         Serial.println(
             displacementAccelerated(duration - timeTaken, acceleration), 6);
       #endif
-      height -= displacementAccelerated(duration - timeTaken, acceleration);
+      height += displacementAccelerated(duration - timeTaken, acceleration);
       postBounceLimitCheck();
     } else {
       height = newHeight;
@@ -98,9 +101,9 @@ void Ball::bounce(void) {
   // dependent on the elasticity factor.
   #if DEBUG
     if (height > ceiling / 2)
-      Serial.print("Ceiling bounce @ ");
+      Serial.print("Ceiling bounce: ");
     else
-      Serial.print("Floor bounce @ ");
+      Serial.print("Floor bounce: ");
     serialReport();
   #endif
   reverseDirection();
@@ -125,7 +128,7 @@ void Ball::postBounceLimitCheck(void) {
 void Ball::changeVelocity(float duration, float acceleration) {
   // Changes the velocity of the ball resulting from acceleration
   float speedDiff = abs(acceleration * duration);
-  if (direction == (acceleration >= 0 ? DOWN : UP)) {
+  if (direction == (acceleration <= 0 ? DOWN : UP)) {
     speed += speedDiff;
   } else if (speedDiff > speed) {
     speed = speedDiff - speed;
@@ -159,7 +162,6 @@ float Ball::timeForDisplacement(float distance, float acceleration) {
   // Returns the time needed to travel the given distance under acceleration
   if (!acceleration)
     return distance / speed;
-  acceleration = abs(acceleration);
   return (sqrt(sq(speed) + 2 * acceleration * distance) - speed) / acceleration;
 }
 
@@ -169,16 +171,16 @@ float Ball::kineticEnergy(void) {
 }
 
 float Ball::velocity(void) {
-  // Returns the velocity (speed * direction) of the ball; Positive is downward
+  // Returns the velocity (speed * direction) of the ball; Positive is upward
   return speed * direction;
 }
 
 void Ball::serialReport() {
   // Reports the current height, speed and kinetic energy over serial
-  Serial.print("h: ");
-  Serial.print(height, 6);
-  Serial.print(", v: ");
-  Serial.print(speed, 6);
-  Serial.print(", k: ");
+  Serial.print("h=");
+  Serial.print(height, 7);
+  Serial.print(", v=");
+  Serial.print(speed, 7);
+  Serial.print(", k=");
   Serial.println(kineticEnergy(), 4);
 }
