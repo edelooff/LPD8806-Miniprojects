@@ -15,9 +15,13 @@ const float
 LPD8806
   strip = LPD8806(ledCount);
 Ball balls[] = {
-    Ball(stripCeiling, 25, .90, 1.2),
+    Ball(stripCeiling, 25, .80, 1.2),
     Ball(stripCeiling, 15, .75, 1.2),
     Ball(stripCeiling, 10, .65, 1.0)};
+const long colors[] = {
+    strip.Color(127, 0, 0),
+    strip.Color(0, 127, 0),
+    strip.Color(0, 0, 127)};
 const byte ballCount = sizeof(balls) / sizeof(Ball);
 
 void setup() {
@@ -43,7 +47,7 @@ void serialAddKineticEnergy(void) {
   byte peekChar = Serial.peek();
   if (peekChar >= '0' && peekChar <= '9') {
     // Adds or subtracts kinetic energy to/from the current ball motion.
-    int addedForce = Serial.parseInt();
+    unsigned long addedForce = Serial.parseInt();
     for (int i = 0; i < ballCount; ++i) {
       Serial.print("Ball #");
       Serial.print(i);
@@ -57,18 +61,23 @@ void serialAddKineticEnergy(void) {
       Serial.println("m/s");
     }
   } else {
-    Serial.read();
+    if (Serial.read() == '?') {
+      for (int i = 0; i < ballCount; ++i) {
+        Serial.print("Ball #");
+        Serial.print(i);
+        Serial.print(": ");
+        balls[i].serialReport();
+      }
+    }
   }
 }
 
 void renderDots() {
   // Render the height of the ball on the line.
-  for (byte i = ballCount; i-- > 0;) {
-    byte intensity = min(127, balls[i].speed * 25);
-    strip.setPixelColor(balls[i].height / ledSpacing,
-                        127 - intensity, 0, intensity);
+  for (byte i = 0; i < ballCount; ++i) {
+    strip.setPixelColor((balls[i].height + ledSpacing / 2) / ledSpacing, colors[i]);
   }
   strip.show();
   for (byte i = ballCount; i-- > 0;)
-    strip.setPixelColor(balls[i].height / ledSpacing, 0);
+    strip.setPixelColor((balls[i].height + ledSpacing / 2) / ledSpacing, 0);
 }

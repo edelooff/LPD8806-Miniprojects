@@ -32,6 +32,7 @@ class Ball {
     void
       bounce(void),
       changeVelocity(float acceleration, float duration),
+      postBounceLimitCheck(void),
       reverseDirection(void),
       speedFromEnergy(float energy);
 };

@@ -23,32 +23,38 @@ void Ball::accelerate(float acceleration, float duration) {
   // be given as positive numbers. Similarly, upward
   // forces should have a negative sign.
   float distance, newHeight, timeTaken;
-  if (speed || height > 0) {
+  if (speed || (height < ceiling && height > 0)) {
     newHeight = height - displacementAccelerated(acceleration, duration);
-    if (newHeight < 0 || newHeight > ceiling) {
+    if (newHeight <= 0 || newHeight >= ceiling) {
+      // Ball bounces, calculate exact time to collision
       distance = newHeight < 0 ? height : ceiling - height;
-      // Bounce on the floor, calculate exact collision time
       if (!distance) {
         timeTaken = 0;
       } else {
-        // pre-bounce only applies if there is distance to cover.
-        Serial.print("Remaining distance: ");
-        Serial.print(distance, 4);
-        Serial.print(" is covered in: ");
+        // Only calculate time required if there is distance to cover
         timeTaken = timeForDisplacement(acceleration, distance);
-        Serial.println(timeTaken, 4);
         changeVelocity(acceleration, timeTaken);
+        #if DEBUG
+          Serial.print("Remaining distance: ");
+          Serial.print(distance, 7);
+          Serial.print(" is covered in: ");
+          Serial.println(timeTaken, 7);
+        #endif
       }
       bounce();
-      changeVelocity(acceleration, duration - timeTaken); // post-bounce
+      // After the bounce, calculate the post-bounce movement
+      changeVelocity(acceleration, duration - timeTaken);
       height = newHeight < 0 ? 0 : ceiling;
+      #if DEBUG
+        Serial.print("Post-bounce height: ");
+        Serial.print(height, 7);
+        Serial.print(", time: ");
+        Serial.print(duration - timeTaken, 7);
+        Serial.print(", movement: ");
+        Serial.println(displacementAccelerated(acceleration, duration - timeTaken), 6);
+      #endif
       height -= displacementAccelerated(acceleration, duration - timeTaken);
-      if (height < 0) {
-        height = 0;
-        speed = 0;
-      }
-      Serial.print("post bounce: ");
-      serialReport();
+      postBounceLimitCheck();
     } else {
       height = newHeight;
       changeVelocity(acceleration, duration);
@@ -84,13 +90,30 @@ void Ball::bounce(void) {
   //
   // Also chips away a fraction of the kinetic energy of the ball,
   // dependent on the elasticity factor.
-  if (height > ceiling / 2)
-    Serial.print("Ceiling bounce @ ");
-  else
-    Serial.print("Floor bounce @ ");
-  serialReport();
+  #if DEBUG
+    if (height > ceiling / 2)
+      Serial.print("Ceiling bounce @ ");
+    else
+      Serial.print("Floor bounce @ ");
+    serialReport();
+  #endif
   reverseDirection();
   speedFromEnergy(kineticEnergy() * elasticity);
+}
+
+void Ball::postBounceLimitCheck(void) {
+  // Checks whether the ball is within bounds after moving post-bounce.
+  //
+  // If it's out, it's placed at the edge with no speed, facing inward.
+  if (height < 0) {
+    height = 0;
+    speed = 0;
+    direction = UP;
+  } else if (height > ceiling) {
+    height = ceiling;
+    speed = 0;
+    direction = DOWN;
+  }
 }
 
 void Ball::changeVelocity(float acceleration, float duration) {
@@ -133,6 +156,7 @@ float Ball::displacementConstant(float duration) {
 
 float Ball::timeForDisplacement(float acceleration, float distance) {
   // Returns the time needed to travel the given distance under acceleration
+  acceleration = abs(acceleration);
   return (sqrt(sq(speed) + 2 * acceleration * distance) - speed) / acceleration;
 }
 
@@ -149,9 +173,9 @@ float Ball::velocity(void) {
 void Ball::serialReport() {
   // Reports the current height, speed and kinetic energy over serial
   Serial.print("h: ");
-  Serial.print(height, 4);
+  Serial.print(height, 6);
   Serial.print(", v: ");
-  Serial.print(speed, 4);
+  Serial.print(speed, 6);
   Serial.print(", k: ");
-  Serial.println(kineticEnergy(), 2);
+  Serial.println(kineticEnergy(), 4);
 }
