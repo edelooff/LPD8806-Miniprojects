@@ -5,7 +5,7 @@
 const int
   ledCount = 158,
   ledPerMeter = 52,
-  updateInterval = 2;
+  updateInterval = 3;
 const float
   gravity = 9.807, // Earth gravity in m/s^2
 //  gravity = 1.622, // Lunar gravity in m/s^2

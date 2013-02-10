@@ -27,6 +27,11 @@ void Ball::travel(float duration, float acceleration) {
     newHeight = height - displacementAccelerated(duration, acceleration);
     if (newHeight <= 0 || newHeight >= ceiling) {
       // Ball bounces, calculate exact time to collision
+
+      //TODO Make distance negative where it requires to be negative and
+      // make the timeForDisplacement function work on non-abs gravity and
+      // actual velocity as opposed to speed. That should fix it without the
+      // current abs() hack.
       distance = newHeight < 0 ? height : ceiling - height;
       if (!distance) {
         timeTaken = 0;
@@ -140,7 +145,7 @@ void Ball::speedFromEnergy(float energy) {
   speed = sqrt(energy / mass * 2);
 }
 
-float Ball::displacementAccelerated(float acceleration, float duration) {
+float Ball::displacementAccelerated(float duration, float acceleration) {
   // Returns the distance moved during acceleration
   return displacementConstant(duration) + 0.5 * acceleration * sq(duration);
 }
