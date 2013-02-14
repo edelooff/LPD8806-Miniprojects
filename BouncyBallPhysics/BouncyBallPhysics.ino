@@ -15,7 +15,7 @@ const float
 LPD8806
   strip = LPD8806(ledCount);
 Ball balls[] = {
-    Ball(stripCeiling, 25, .80, 1.2),
+    Ball(stripCeiling, 25, .80, 1.0),
     Ball(stripCeiling, 15, .75, 1.2),
     Ball(stripCeiling, 10, .65, 1.5)};
 const long colors[] = {

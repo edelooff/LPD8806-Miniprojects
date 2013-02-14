@@ -6,11 +6,12 @@ A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are gene
 BouncyBallPhysics
 -------------------
 
-This sketch is a small physics (gravitational acceleration and bouncing) simulation on Arduino. A 5kg ball (LED) is dropped from a height of 1 meter (the 'ground' is the beginning of the strip). From there, it accelerates according to the configured gravitational constant (9.81 m/s^2) until it hits the floor. On each bounce the ball loses a fraction of its kinetic energy (this is the configurable elasticity variable). Once the speed of the ball drops below a certain threshold, it stops bouncing altogether.
+This sketch is a physics (gravity) simulation on Arduino. Three balls, visualized by three colored pixels, are dropped from distances between 1 and 1.5 meters above the ground (the 'ground' is the beginning of the strip). From where they start aboveground, they fall down according to the laws of gravity until they hit the floor. From there they bounce up, losing a fraction of their kinetic energy determined by their elasticity coefficient. This causes the ball to bounce up slighlty to significantly less high, and this continues until all kinetic energy has been sapped from the ball.
 
-Using the serial interface, one can add (or subtract) kinetic energy to the ball in motion. Energy is always added in the current direction of motion. For a ball in rest, force is added in the upward direction (not making the ball bounce and lose energy right away). The added force and resulting speed difference are reported back over serial, as well as bounces on either the ground or ceiling,
+Using the serial interface, you can 'push' (add kinetic energy to) the balls. Each ball has its own weight, and thus reacts differently to the push they receive. If the balls are currently moving, energy is added in that direction, otherwise the balls are pushed away from gravity. Old and new speed resulting from the push are reported back over serial for each ball. To keep things balanced, the lighter the ball, the less elastic its bounce, so that everything comes to a halt relatively close together.
 
-This sketch is based on the LPD8806 library by Adafruit. It also assumes a strip with 52 LEDs per meter. If you try this yourself and have a different size strip, please change the _ledPerMeter_ to match your strip or the visible acceleration will not match our terrestrial acceleration. Zero-gravity and fully elastic bounces are supported; zero-weight objects are not (yet) supported.
+This sketch assumes a strip with 52 LEDs per meter. If your strip has a different LED density, change the _ledPerMeter_ constant to match your strip. If you don't, the displayed acceleration will not match our terrestrial acceleration. Negative and zero gravity are supported, as well as balls that _gain_ energy when bouncing (an elasticity coefficient >1). Zero-weight objects are not supported, physics doesn't allow for them to travel at any speed other than lightspeed.
+
 
 GreenFlyingDot
 --------------
@@ -21,13 +22,13 @@ This sketch sends a green dot flying over the strip. It builds on the examples p
 MiniFade
 --------
 
-A basic example of communicating with the LPD8806 LED-strip, without using any existing libraries. This sketch uses direct SPI communication. This reduces the memory footprint of the application significantly (the LPD8806 library requires 3 bytes for each LED), which might be an interesting technique for sketches that require most of the 2kB of available SRAM on a typical Arduino. The animation shown is a very plain and simple full-strip animated white blinking (with a few steps of smoothing in place).
+A basic example of communicating with the LPD8806 LED-strip, using only default Arduino libraries. This sketch uses direct SPI communication. This reduces the memory (RAM) footprint of the application significantly (the LPD8806 library requires 3 bytes for each LED), which might be an interesting technique for sketches that require most of the 2kB of available SRAM on a typical Arduino. The animation shown is a very plain and simple full-strip animated white blinking (with a few steps of smoothing in place).
 
 
 RunningColorDot
 ---------------
 
-In this sketch, a colored dot is painted on the strip. The dot moves along the strip at a considerable speed (this delay is configurable) while changing colors all the while (again, configurable). Behind the dot is a fading trail and the length of this combined trail can be set. As this is achieved by simple bit shifting the maximum length is 7, though 5 or 6 look better.
+In this sketch, a colored dot is painted on the strip. The dot moves along the strip at a considerable speed (the delay between steps is configurable) while changing colors all the while (again, configurable speed). Behind the dot is a fading trail and the length of this combined trail can be set. As this is achieved by simple bit shifting the maximum length is 7, though it looks considerably better with a shorter length of 5 or 6 LEDs.
 
 In addition to moving along the strip, there is a "one in a number" chance for the trail to change direction. The main dot's direction changes and the trail follows the dot in the other direction. Where the change of direction happened, a light on the strip lights up, as if the dot had collided with it. There is also a brief pause when the 'collision' occurs. This dot remains lit on the strip until the trail passes over it, and has no further purpose.
 
