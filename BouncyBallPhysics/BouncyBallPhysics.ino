@@ -72,12 +72,13 @@ void serialAddKineticEnergy(void) {
   }
 }
 
-void renderDots() {
+void renderDots(void) {
   // Render the height of the ball on the line.
-  for (byte i = 0; i < ballCount; ++i) {
-    strip.setPixelColor((balls[i].height + ledSpacing / 2) / ledSpacing, colors[i]);
+  for (int i = 0; i < ballCount; ++i) {
+    int index = (balls[i].height + ledSpacing / 2) / ledSpacing;
+    strip.setPixelColor(index, colors[i] | strip.getPixelColor(index));
   }
   strip.show();
-  for (byte i = ballCount; i-- > 0;)
+  for (int i = ballCount; i-- > 0;)
     strip.setPixelColor((balls[i].height + ledSpacing / 2) / ledSpacing, 0);
 }
