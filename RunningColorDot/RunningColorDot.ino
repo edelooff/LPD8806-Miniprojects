@@ -4,8 +4,8 @@
 
 const int
   collisionPauseTime = 100,
-  intervalColor = 2,
-  intervalStep = 20,
+  colorChangeInterval = 2,
+  colorChangesPerStep = 10,
   ledCount = 158,
   trailLength = 6,
   guaranteedSteps = 40,
@@ -20,18 +20,13 @@ void setup() {
 
 void loop() {
   // Sends a color-changing dot along the strip
-  static long
-    nextColor = 0,
-    nextStep = 0;
-  long currentMillis = millis();
-  if (currentMillis >= nextStep) {
-    nextStep = currentMillis + intervalStep;
+  static int changeCounter = 0;
+  if (++changeCounter == colorChangesPerStep) {
+    changeCounter = 0;
     moveTrail();
   }
-  if (currentMillis >= nextColor) {
-    nextColor = currentMillis + intervalColor;
-    paintTrail(rotatingWheelColor());
-  }
+  paintTrail(rotatingWheelColor());
+  delay(colorChangeInterval);
 }
 
 void moveTrail(void) {
