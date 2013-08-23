@@ -51,9 +51,9 @@ void moveTrail(void) {
   strip.setPixelColor(trail[trailLength - 1], 0); // Remove end of current tail.
   for (int index = trailLength; index-- > 1;)
     trail[index] = trail[index - 1];
-  if (stepsWithoutChange > 0)
+  if (stepsWithoutChange > 0) {
     --stepsWithoutChange;
-  if (!random(swapChanceReciprocal) && !stepsWithoutChange) {
+  } else if (!random(swapChanceReciprocal)) {
     // Paint block, reverse direction and don't 'collide' for a while
     paintBlock(trail[0], direction, rotatingWheelColor());
     direction *= -1; // toggle direction between 1 and -1
