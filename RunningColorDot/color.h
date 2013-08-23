@@ -1,5 +1,3 @@
 struct rgbdata_t {
-  byte r;
-  byte g;
-  byte b;
+  byte r, g, b;
 };

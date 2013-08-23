@@ -1,16 +1,30 @@
-#include <LPD8806.h>
-#include <SPI.h>
-#include "color.h"
+/*
+ * RunningColorDot by Elmer de Looff from Frack - Hackerspace Friesland
+ *
+ * This is the Arduino (C++) source code for the project demonstrated here.
+ * It paints a color-changing dot that quickly travels around the strip, leaving
+ * a short trail in its wake. On every step, the dot has a small chance of 
+ * reversing direction, which is made more obvious by showing a 'block' on the
+ * strip. Once placed, these reminders serve no purpose and are 'eaten up' by
+ * the light trail whenever it encounters them again
+ *
+ * This and more available on https://github.com/edelooff/LPD8806-Miniprojects
+ * Interested in what we do at Frack? check out our wiki: http://frack.nl/wiki
+ */
+
+#include <LPD8806.h> // Obtained from https://github.com/adafruit/LPD8806
+#include <SPI.h>     // Provides SPI communication
+#include "color.h"   // Defines struct rgbdata_t { byte r, g, b; };
 
 const int
   collisionPauseTime = 100,
   colorChangeInterval = 2,
   colorChangesPerStep = 10,
-  ledCount = 158,
+  ledCount = 96,
   trailLength = 6,
   guaranteedSteps = 40,
   swapChanceReciprocal = 100;
-LPD8806 strip = LPD8806(ledCount); // Using hardware SPI on pins 11 & 13
+LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 int trail[trailLength];
 
 void setup() {
@@ -19,11 +33,12 @@ void setup() {
 }
 
 void loop() {
-  // Sends a color-changing dot along the strip
   static unsigned int changeCounter = 0;
-  static long nextColor = 0;
-  if (millis() >= nextColor) {
-    nextColor += colorChangeInterval;
+  static long currentMillis, nextColor = 0;
+  currentMillis = millis();
+  if (currentMillis >= nextColor) {
+    // In-place addition would speed up the animation post-collision
+    nextColor = currentMillis + colorChangeInterval;
     if (++changeCounter % colorChangesPerStep == 0)
       moveTrail();
     paintTrail(rotatingWheelColor());
@@ -31,27 +46,25 @@ void loop() {
 }
 
 void moveTrail(void) {
-  static boolean forward = true;
-  static int changelessSteps = guaranteedSteps;
-  strip.setPixelColor(trail[trailLength - 1], 0);
+  static char direction = 1;
+  static int stepsWithoutChange = guaranteedSteps;
+  strip.setPixelColor(trail[trailLength - 1], 0); // Remove end of current tail.
   for (int index = trailLength; index-- > 1;)
     trail[index] = trail[index - 1];
-  if (changelessSteps > 0)
-    --changelessSteps;
-  if (!random(swapChanceReciprocal) && !changelessSteps) {
-    // Change direction, paint a block and set 'safe steps' variable
-    paintBlock(trail[0], forward, rotatingWheelColor());
-    forward = !forward;
-    changelessSteps = guaranteedSteps;
+  if (stepsWithoutChange > 0)
+    --stepsWithoutChange;
+  if (!random(swapChanceReciprocal) && !stepsWithoutChange) {
+    // Paint block, reverse direction and don't 'collide' for a while
+    paintBlock(trail[0], direction, rotatingWheelColor());
+    direction *= -1; // toggle direction between 1 and -1
+    stepsWithoutChange = guaranteedSteps;
   }
-  if (forward)
-    trail[0] = (trail[1] + 1) % ledCount;
-  else
-    trail[0] = (trail[1] + ledCount - 1) % ledCount;
+  // Add `ledCount` to the head position index so we never modulo negative ints.
+  trail[0] = (trail[1] + ledCount + direction) % ledCount;
 }
 
-void paintBlock(int index, boolean forward, rgbdata_t color) {
-  index = (index + ledCount + (forward ? 1 : -1)) % ledCount;
+void paintBlock(int index, char direction, rgbdata_t color) {
+  index = (index + ledCount + direction) % ledCount;
   strip.setPixelColor(index, attenuateColor(color, 0));
   strip.show();
   delay(collisionPauseTime);
@@ -63,16 +76,14 @@ void paintTrail(rgbdata_t color) {
   strip.show();
 }
 
-long attenuateColor(rgbdata_t color, byte attenuation) {
-  return strip.Color(color.r >> attenuation,
-                     color.g >> attenuation,
-                     color.b >> attenuation);
+long attenuateColor(rgbdata_t color, byte att) {
+  return strip.Color(color.r >> att, color.g >> att, color.b >> att);
 }
 
 rgbdata_t rotatingWheelColor() {
-  byte down, up;
   static unsigned int wheelPos;
-  ++wheelPos %= 384; // There are 384 'degrees' on the color wheel
+  byte down, up;
+  ++wheelPos %= 384; // Iterate through all 384 'degrees', from 0 up to 383.
   down = 127 - wheelPos % 128;
   up = wheelPos % 128;
   switch(wheelPos / 128) {
