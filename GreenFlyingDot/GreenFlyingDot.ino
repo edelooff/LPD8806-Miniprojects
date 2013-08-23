@@ -16,14 +16,16 @@ void setup() {
 }
 
 void loop() {
-  // Sends green dot back and forth.
-  // Each position lights up for the configured duration
-  // Bug: ends of strip light up 2x longer
+  // Sends green dot bouncing back and forth over the strip.
+  // Each position lights up for the configured duration 'interval'
   static int ledPosition = 0;
   while (ledPosition < ledCount)
     moveAndPause(ledPosition++);
+  // ledPosition is post-incremented to ledCount, breaking the loop.
+  // We already showed the LED at the end though, so we reduce by 2.
+  ledPosition -= 2;
   while (ledPosition > 0)
-    moveAndPause(--ledPosition);
+    moveAndPause(ledPosition--);
 }
 
 void moveAndPause(int position) {
