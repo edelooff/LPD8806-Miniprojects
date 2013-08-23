@@ -1,7 +1,7 @@
 LPD8806-Miniprojects
 ====================
 
-A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are generally small (&lt;200 SLOC) and are intended to demonstrate and explore animation possibilities. Some of these projects require the LPD8806 library by Adafruit: https://github.com/adafruit/LPD8806.
+A collection of Arduino mini-projects for LPD8806 RGB LED-strips. These are generally small (&lt;200 SLOC) and are intended to demonstrate and explore animation possibilities. Some of these projects require the [LPD8806 library](https://github.com/adafruit/LPD8806) by [Adafruit](http://adafruit.com).
 
 BouncyBallPhysics
 -------------------
