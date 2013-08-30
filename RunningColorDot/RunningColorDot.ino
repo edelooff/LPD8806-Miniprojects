@@ -3,7 +3,7 @@
  *
  * This is the Arduino (C++) source code for the project demonstrated here.
  * It paints a color-changing dot that quickly travels around the strip, leaving
- * a short trail in its wake. On every step, the dot has a small chance of 
+ * a short trail in its wake. On every step, the dot has a small chance of
  * reversing direction, which is made more obvious by showing a 'block' on the
  * strip. Once placed, these reminders serve no purpose and are 'eaten up' by
  * the light trail whenever it encounters them again
@@ -56,7 +56,7 @@ void moveTrail(void) {
   } else if (!random(swapChanceReciprocal)) {
     // Paint block, reverse direction and don't 'collide' for a while
     paintBlock(trail[0], direction, rotatingWheelColor());
-    direction *= -1; // toggle direction between 1 and -1
+    direction *= -1; // toggle direction between forward and backward
     stepsWithoutChange = guaranteedSteps;
   }
   // Add `ledCount` to the head position index so we never modulo negative ints.
