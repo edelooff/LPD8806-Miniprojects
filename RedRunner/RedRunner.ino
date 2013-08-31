@@ -14,15 +14,16 @@ LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 
 // Barrier variables
 const unsigned int
-  barrierChance = 50,
-  barrierInterval = 150,
+  barrierChance = 20,
+  barrierInterval = 250,
   barrierLevels[5] = {0, 5, 23, 61, 127},
+  barrierStartLevel = 4,
   maxBarriers = 20;
 barrier_t barriers[maxBarriers];
 
 void setup() {
-  strip.begin();
   randomSeed(analogRead(0));
+  strip.begin();
 }
 
 void loop() {
@@ -54,12 +55,12 @@ void drawScene() {
 
 int barrierCollision(unsigned int position) {
   for (int i = maxBarriers; i-- > 0;)
-    if (position == barriers[i].position)
+    if (position == barriers[i].position and barriers[i].level)
       return i;
   return -1;
 }
 
-int firstDeadBarrier() {
+int firstNonBarrier() {
   for (int i = maxBarriers; i-- > 0;)
     if (!barriers[i].level)
       return i;
@@ -69,10 +70,9 @@ int firstDeadBarrier() {
 void moveTrail(void) {
   static char dir = 1;
   int collision = barrierCollision((trail[1] + ledCount + dir) % ledCount);
-  if (collision >= 0) {
-    barriers[collision].level--; // Barrier integrity reduces at collision.
-    dir *= -1;                   // Reverse direction after collision.
-  }
+  if (collision >= 0)
+    if (--barriers[collision].level) // Barrier integrity reduces at collision.
+      dir *= -1;                     // Reverse direction if barrier still up.
   for (int i = trailLength; i-- > 1;)
     trail[i] = trail[i - 1];
   // Add `ledCount` to the head position index so we never modulo negative ints.
@@ -81,11 +81,11 @@ void moveTrail(void) {
 
 void placeBarrier() {
   if (random(100) < barrierChance) {
-    int availableIndex = firstDeadBarrier();
+    int availableIndex = firstNonBarrier();
     if (availableIndex >= 0) {
       int barrierPosition = random(ledCount);
-      if (barrierCollision(barrierPosition) >= 0 && barrierPosition != trail[0])
-        barriers[availableIndex] = {barrierPosition, sizeof(barrierLevels) - 1};
+      if (barrierCollision(barrierPosition) < 0 && barrierPosition != trail[0])
+        barriers[availableIndex] = {barrierPosition, barrierStartLevel};
     }
   }
 }
