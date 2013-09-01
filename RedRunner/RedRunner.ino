@@ -4,7 +4,7 @@
 
 #define DEBUG true
 
-// Function declarations for commandline compilation
+// Function declarations for command line compilation
 void drawScene();
 void moveTrail();
 void placeBarrier();
@@ -121,7 +121,7 @@ void moveTrail(void) {
   }
 }
 
-unsigned int randomFreeIndex() {
+int randomFreeIndex() {
   barrier_t* barrier;
   int index = random(ledCount);
   while (barrierCollision(index, barrier) ||
