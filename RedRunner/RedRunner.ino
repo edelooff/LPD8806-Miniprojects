@@ -14,8 +14,8 @@ LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 
 // Barrier variables
 const unsigned int
-  barrierChance = 20,
-  barrierInterval = 250,
+  barrierChance = 40,
+  barrierInterval = 600,
   barrierLevels[] = {6, 22, 56, 127},
   barrierStartLevel = sizeof(barrierLevels) / sizeof(int),
   maxBarriers = 20;
@@ -69,11 +69,12 @@ int firstNonBarrier() {
 
 void moveTrail(void) {
   static char dir = 1;
-  int collision = barrierCollision((trail[0] + ledCount + dir) % ledCount);
-  if (collision >= 0)
-    if (--barriers[collision].level) // Barrier integrity reduces at collision.
-      dir *= -1;                     // Reverse direction if barrier is still up.
-  for (int i = trailLength; i-- > 1;)
+  int bar = barrierCollision((trail[0] + ledCount + dir) % ledCount);
+  if (bar >= 0) {
+    if (--barriers[bar].level == 0) // Barrier integrity reduces at collision.
+      strip.setPixelColor(barriers[bar].position, 0); // Remove broken barrier.
+    dir *= -1;                      // Reverse direction after collision
+  }  for (int i = trailLength; i-- > 1;)
     trail[i] = trail[i - 1];
   trail[0] = (trail[1] + ledCount + dir) % ledCount;
 }
