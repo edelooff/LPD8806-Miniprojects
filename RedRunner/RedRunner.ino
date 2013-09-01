@@ -6,9 +6,9 @@
 const unsigned int
   ledCount = 96,
   stepInterval = 10,
-  trailLength = 16,
-  trailLevels[trailLength] = {
-      127, 106, 88, 72, 58, 46, 36, 27, 20, 14, 10, 6, 4, 2, 1, 0};
+  trailLevels[] = {
+      127, 106, 88, 72, 58, 46, 36, 27, 20, 14, 10, 6, 4, 2, 1, 0},
+  trailLength = sizeof(trailLevels) / sizeof(int);
 unsigned int trail[trailLength] = {};
 LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 
@@ -16,8 +16,8 @@ LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 const unsigned int
   barrierChance = 20,
   barrierInterval = 250,
-  barrierLevels[5] = {0, 5, 23, 61, 127},
-  barrierStartLevel = 4,
+  barrierLevels[] = {6, 22, 56, 127},
+  barrierStartLevel = sizeof(barrierLevels) / sizeof(int),
   maxBarriers = 20;
 barrier_t barriers[maxBarriers];
 
@@ -46,9 +46,9 @@ void drawScene() {
   for (int i = trailLength; i-- > 0;)
     strip.setPixelColor(trail[i], trailLevels[i], 0, 0);
   for (int i = maxBarriers; i-- > 0;) {
-    barrier_t barrier = barriers[i];
-    if (barrier.level)
-      strip.setPixelColor(barrier.position, 0, 0, barrierLevels[barrier.level]);
+    barrier_t bar = barriers[i];
+    if (bar.level)
+      strip.setPixelColor(bar.position, 0, 0, barrierLevels[bar.level - 1]);
   }
   strip.show();
 }
@@ -69,13 +69,12 @@ int firstNonBarrier() {
 
 void moveTrail(void) {
   static char dir = 1;
-  int collision = barrierCollision((trail[1] + ledCount + dir) % ledCount);
+  int collision = barrierCollision((trail[0] + ledCount + dir) % ledCount);
   if (collision >= 0)
     if (--barriers[collision].level) // Barrier integrity reduces at collision.
-      dir *= -1;                     // Reverse direction if barrier still up.
+      dir *= -1;                     // Reverse direction if barrier is still up.
   for (int i = trailLength; i-- > 1;)
     trail[i] = trail[i - 1];
-  // Add `ledCount` to the head position index so we never modulo negative ints.
   trail[0] = (trail[1] + ledCount + dir) % ledCount;
 }
 
