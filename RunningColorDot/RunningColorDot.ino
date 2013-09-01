@@ -16,6 +16,13 @@
 #include <SPI.h>     // Provides SPI communication
 #include "color.h"   // Defines struct rgbdata_t { byte r, g, b; };
 
+// Function declarations for command line compilation
+long attenuateColor(rgbdata_t, byte);
+void moveTrail();
+void paintBlock(int, char, rgbdata_t);
+void paintTrail(rgbdata_t);
+rgbdata_t rotatingWheelColor();
+
 const int
   collisionPauseTime = 100,
   colorChangeInterval = 2,
@@ -91,7 +98,7 @@ rgbdata_t rotatingWheelColor() {
       return rgbdata_t {down, up, 0};
     case 1:
       return rgbdata_t {0, down, up};
-    case 2:
+    default:
       return rgbdata_t {up, 0, down};
   }
 }
