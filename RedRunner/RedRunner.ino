@@ -2,6 +2,15 @@
 #include <SPI.h>     // Provides SPI communication
 #include "barrier.h" // Defines `barrier_t` struct with `position` and `level`
 
+#define DEBUG true
+
+// Function declarations for commandline compilation
+void drawScene();
+void moveTrail();
+void placeBarrier();
+void placeTeleport();
+bool teleportation(int, int&);
+
 // Trail and strip variables
 const unsigned int
   ledCount = 96,
@@ -26,6 +35,10 @@ int teleport[] = {-1, -1};
 
 void setup() {
   randomSeed(analogRead(0));
+  #if DEBUG
+  Serial.begin(115200);
+  Serial.println("[RedRunner, game start]");
+  #endif
   strip.begin();
 }
 
@@ -65,33 +78,43 @@ void drawScene() {
   strip.show();
 }
 
-int barrierCollision(unsigned int position) {
+bool barrierCollision(unsigned int position, barrier_t* &barrier) {
   for (int i = maxBarriers; i-- > 0;)
     if (position == barriers[i].position and barriers[i].level)
-      return i;
-  return -1;
+      return (barrier = &barriers[i]);
+  return false;
 }
 
-int firstNonBarrier() {
+bool firstFreeBarrier(barrier_t* &barrier) {
   for (int i = maxBarriers; i-- > 0;)
     if (!barriers[i].level)
-      return i;
-  return -1;
+      return (barrier = &barriers[i]);
+  return false;
 }
 
 void moveTrail(void) {
+  barrier_t* barrier;
   static char dir = 1;
-  int bar, teleportLocation;
-  teleportLocation = teleportFrom(trail[0]);
+  int teleportLocation = 0;
   for (int i = trailLength; i-- > 1;)
     trail[i] = trail[i - 1];
-  if (teleportLocation >= 0) {
+  if (teleportation(trail[0], teleportLocation)) {
     trail[0] = teleportLocation;
+    #if DEBUG
+    Serial.print("Teleport! New position ");
+    Serial.println(teleportLocation);
+    #endif
   } else {
-    bar = barrierCollision((trail[1] + ledCount + dir) % ledCount);
-    if (bar >= 0) {
-      if (--barriers[bar].level == 0) // Barrier integrity reduces at collision.
-        strip.setPixelColor(barriers[bar].position, 0); // Remove broken barrier.
+    if (barrierCollision((trail[1] + ledCount + dir) % ledCount, barrier)) {
+      #if DEBUG
+      Serial.print("Ran into barrier ");
+      Serial.print(barrier->position);
+      Serial.print(" [");
+      Serial.print(barrier->level);
+      Serial.println("]");
+      #endif
+      if (--barrier->level == 0) // Barrier integrity reduces at collision.
+        strip.setPixelColor(barrier->position, 0); // Remove broken barrier.
       dir *= -1;                      // Reverse direction after collision
     }
     trail[0] = (trail[1] + ledCount + dir) % ledCount;
@@ -99,19 +122,24 @@ void moveTrail(void) {
 }
 
 unsigned int randomFreeIndex() {
-  unsigned int index = random(ledCount);
-  while (barrierCollision(index) > 0 ||
+  barrier_t* barrier;
+  int index = random(ledCount);
+  while (barrierCollision(index, barrier) ||
          index == trail[0] || index == teleport[0] || index == teleport[1])
     index = random(ledCount);
   return index;
 }
 
 void placeBarrier() {
-  if (random(100) < barrierChance) {
-    int availableIndex = firstNonBarrier();
-    if (availableIndex >= 0)
-      barriers[availableIndex] = {randomFreeIndex(), barrierStartLevel};
-  }
+  barrier_t* barrier;
+  if (random(100) < barrierChance)
+    if (firstFreeBarrier(barrier)) {
+      *barrier = {randomFreeIndex(), barrierStartLevel};
+      #if DEBUG
+      Serial.print("Placed barrier at ");
+      Serial.println(barrier->position);
+      #endif
+    }
 }
 
 void placeTeleport() {
@@ -121,16 +149,11 @@ void placeTeleport() {
   }
 }
 
-int teleportFrom(unsigned int start) {
-  int retval = -1;
-  if (start == teleport[0]) {
-    retval = teleport[1];
-    teleport[0] = -1;
-    teleport[1] = -1;
-  } else if (start == teleport[1]) {
-    retval = teleport[0];
-    teleport[0] = -1;
-    teleport[1] = -1;
-  }
-  return retval;
+bool teleportation(int position, int &newPosition) {
+  if (position != teleport[0] && position != teleport[1])
+    return false;
+  newPosition = (position == teleport[0]) ? teleport[0] : teleport[1];
+  teleport[0] = -1;
+  teleport[1] = -1;
+  return true;
 }
