@@ -51,7 +51,7 @@ bool checkCollision(int position, barrier_t* &barrier) {
 bool checkTeleportation(int position, int &newPosition) {
   if (position != teleport[0] && position != teleport[1])
     return false;
-  newPosition = (position == teleport[0]) ? teleport[0] : teleport[1];
+  newPosition = (position == teleport[0]) ? teleport[1] : teleport[0];
   teleport[0] = -1;
   teleport[1] = -1;
   return true;
