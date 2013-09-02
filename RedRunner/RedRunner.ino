@@ -78,7 +78,7 @@ void drawScene() {
   strip.show();
 }
 
-bool barrierCollision(unsigned int position, barrier_t* &barrier) {
+bool barrierCollision(int position, barrier_t* &barrier) {
   for (int i = maxBarriers; i-- > 0;)
     if (position == barriers[i].position and barriers[i].level)
       return (barrier = &barriers[i]);
@@ -110,7 +110,7 @@ void moveTrail(void) {
       Serial.print("Ran into barrier ");
       Serial.print(barrier->position);
       Serial.print(" [");
-      Serial.print(barrier->level);
+      Serial.print(barrier->level, DEC);
       Serial.println("]");
       #endif
       if (--barrier->level == 0) // Barrier integrity reduces at collision.
