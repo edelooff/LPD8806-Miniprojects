@@ -3,13 +3,15 @@
 #include "barrier.h" // Defines `barrier_t` struct with `position` and `level`
 
 #define DEBUG true
+#define DEBUG_TRAIL true
 
 // Trail and strip variables
 const unsigned int
   ledCount = 96,
-  stepInterval = 10,
+  stepInterval = 10;
+const unsigned char
   trailLevels[] = {127, 106, 88, 72, 58, 46, 36, 27, 20, 14, 10, 6, 4, 2, 1, 0},
-  trailLength = sizeof(trailLevels) / sizeof(int);
+  trailLength = sizeof(trailLevels);
 int trail[trailLength] = {};
 LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 
@@ -17,9 +19,10 @@ LPD8806 strip = LPD8806(ledCount); // Hardware SPI. Pins 11 & 13 on Arduino Uno.
 const unsigned int
   barrierChance = 40,
   barrierInterval = 550,
-  barrierLevels[] = {6, 22, 56, 127},
-  barrierStartLevel = sizeof(barrierLevels) / sizeof(int),
   maxBarriers = 20;
+const unsigned char
+  barrierLevels[] = {6, 22, 56, 127},
+  barrierStartLevel = sizeof(barrierLevels);
 barrier_t barriers[maxBarriers];
 
 // Teleport variables
@@ -82,13 +85,13 @@ void moveTrail(void) {
   if (checkTeleportation(trail[0], teleportLocation)) {
     trail[0] = teleportLocation;
     #if DEBUG
-    Serial.print("Teleport! New position ");
+    Serial.print("Teleported to ");
     Serial.println(teleportLocation);
     #endif
   } else {
-    if (checkCollision((trail[1] + ledCount + dir) % ledCount, barrier)) {
+    if (checkCollision((trail[0] + ledCount + dir) % ledCount, barrier)) {
       #if DEBUG
-      Serial.print("Ran into barrier ");
+      Serial.print("Collided @ ");
       Serial.print(barrier->position);
       Serial.print(" [");
       Serial.print(barrier->level, DEC);
@@ -98,7 +101,11 @@ void moveTrail(void) {
         strip.setPixelColor(barrier->position, 0); // Remove broken barrier.
       dir *= -1;                      // Reverse direction after collision
     }
-    trail[0] = (trail[1] + ledCount + dir) % ledCount;
+    trail[0] = (trail[0] + ledCount + dir) % ledCount;
+    #if DEBUG && DEBUG_TRAIL
+    Serial.print("H");
+    Serial.println(trail[0]);
+    #endif
   }
 }
 
@@ -108,7 +115,7 @@ void placeBarrier() {
     if (getFreeBarrier(barrier)) {
       *barrier = {getFreeStripPosition(), barrierStartLevel};
       #if DEBUG
-      Serial.print("Placed barrier at ");
+      Serial.print("Barrier @ ");
       Serial.println(barrier->position);
       #endif
     }
@@ -118,6 +125,12 @@ void placeTeleport() {
   if (teleport[0] < 0) {
     teleport[0] = getFreeStripPosition();
     teleport[1] = getFreeStripPosition();
+    #if DEBUG
+    Serial.print("Teleport @ ");
+    Serial.print(teleport[0]);
+    Serial.print(",");
+    Serial.println(teleport[1]);
+    #endif
   }
 }
 
@@ -125,7 +138,7 @@ void setup() {
   randomSeed(analogRead(0));
   #if DEBUG
   Serial.begin(115200);
-  Serial.println("[RedRunner, game start]");
+  Serial.println("[RedRunner]");
   #endif
   strip.begin();
 }
