@@ -1,4 +1,3 @@
-SOURCES      := RedRunner.ino
 LIBRARIES    := LPD8806 SPI
 BOARD        := atmega328
 
